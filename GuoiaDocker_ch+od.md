@@ -219,3 +219,9 @@ User.create!(
   confirmed_at: Time.now
   
 )
+
+account = Account.create!(name: "MiLab")
+
+user = User.find_by(email: "ndrepruebas@gmail.com")
+
+docker compose restart
