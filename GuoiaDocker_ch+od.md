@@ -201,3 +201,21 @@ Archivo PID bloqueado después de reiniciar, solución:
 docker compose down 
 
 docker compose up -d --force-recreate 
+
+Crear usuario Administrador en Chatwoot:
+
+docker compose exec chatwoot bundle exec rails console
+
+User.create!(
+
+  name: "Andrea",
+  
+  email: "ndrepruebas@gmail.com",
+  
+  password: "Admin123!",
+  
+  password_confirmation: "Admin123!",
+  
+  confirmed_at: Time.now
+  
+)
