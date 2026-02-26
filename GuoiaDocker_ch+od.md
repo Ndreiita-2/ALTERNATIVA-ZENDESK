@@ -1,11 +1,3 @@
-Perfecto 👌
-Aquí tienes la **guía completa en formato Markdown lista para subir a GitHub** (`README.md`).
-
-Puedes copiarla directamente.
-
----
-
-````markdown
 # 🚀 Infraestructura Docker: Chatwoot + Odoo + Zammad
 
 Guía completa para desplegar:
@@ -344,24 +336,17 @@ docker exec zammad-postgresql pg_dump -U zammad zammad > zammad.sql
 
 ---
 
-# ✅ Estado Final Esperado
 
-* Chatwoot funcionando
-* Odoo funcionando
-* Zammad funcionando en servidor independiente
-* Bases separadas correctamente
-* Sin errores 500
-* Sin conflictos de credenciales
-
-```
-
----
-
-Si quieres, te preparo también:
+Continua ...
 
 - Versión con Nginx + HTTPS
 - Script de instalación automática
 - Arquitectura lista para producción real con dominios
 
-¿Lo quieres para entorno productivo o laboratorio?
-```
+
+
+Archivo PID bloqueado después de reiniciar, solución: 
+
+docker compose down 
+
+docker compose up -d --force-recreate 
