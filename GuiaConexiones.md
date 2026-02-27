@@ -242,22 +242,245 @@ Verificar funcionamiento enviando mensajes de prueba.
 
 # 10. ENVIAR CHATWOOT A ZAMMAD
 
-Método recomendado:
-
-Settings → Automation → Email Forward
-
-Reenviar todos los mensajes entrantes a:
-
-ndrepruebas@gmail.com
-
-Zammad los convierte en tickets automáticamente.
-
-Ventajas:
-- Estable
-- Bajo mantenimiento
-- Sin dependencias API complejas
+Método: Webhook personalizado (servicio intermedio Node.js)
 
 ---
+
+# 10.1 Crear servicio Webhook (Máquina 1)
+
+El webhook se instala en la máquina donde está Chatwoot (fuera de Docker).
+
+Ruta recomendada:
+
+```
+/opt/chatwoot_zammad_webhook/
+```
+
+---
+
+## Instalar Node.js (si no está instalado)
+
+```bash
+sudo apt update
+sudo apt install nodejs npm -y
+```
+
+Comprobar versión:
+
+```bash
+node -v
+```
+
+---
+
+## Crear proyecto
+
+```bash
+sudo mkdir -p /opt/chatwoot_zammad_webhook
+cd /opt/chatwoot_zammad_webhook
+sudo npm init -y
+sudo npm install express axios
+```
+
+---
+
+## Crear archivo server.js
+
+```bash
+sudo nano server.js
+```
+
+---
+
+## server.js
+
+```javascript
+const express = require('express');
+const axios = require('axios');
+
+const app = express();
+app.use(express.json());
+
+// IP de la Máquina 2 (Zammad)
+const ZAMMAD_URL = "http://IP_ZAMMAD";
+// Token API generado en Zammad
+const ZAMMAD_TOKEN = "TOKEN_ZAMMAD_AQUI";
+
+app.post('/api/chatwoot_ticket', async (req, res) => {
+
+    try {
+
+        // Solo procesar cuando se crea un mensaje
+        if (req.body.event !== "message_created") {
+            return res.status(200).json({ status: "ignored" });
+        }
+
+        // Solo mensajes entrantes del cliente (0 = incoming)
+        if (req.body.message_type !== 0) {
+            return res.status(200).json({ status: "not_customer_message" });
+        }
+
+        const sender = req.body.sender;
+        const conversation = req.body.conversation;
+        const message = req.body.content;
+
+        const title = `Chatwoot Conv ${conversation.id}`;
+
+        await axios.post(`${ZAMMAD_URL}/api/v1/tickets`, {
+            title: title,
+            group: "Users",
+            customer: sender.email || "cliente@empresa.com",
+            article: {
+                subject: title,
+                body: message,
+                type: "note",
+                internal: false
+            }
+        }, {
+            headers: {
+                "Authorization": `Token token=${ZAMMAD_TOKEN}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        return res.status(200).json({ status: "ticket_created" });
+
+    } catch (error) {
+
+        console.error(error.response?.data || error.message);
+
+        return res.status(500).json({ status: "error" });
+    }
+});
+
+app.listen(5000, '0.0.0.0', () => {
+    console.log("Webhook Chatwoot → Zammad activo en puerto 5000");
+});
+```
+
+---
+
+## Editar variables
+
+Modificar en el archivo:
+
+```
+IP_ZAMMAD
+TOKEN_ZAMMAD_AQUI
+```
+
+La IP debe ser la de la Máquina 2.
+
+---
+
+## Ejecutar servicio
+
+```bash
+node server.js
+```
+
+Para producción (recomendado):
+
+```bash
+sudo npm install -g pm2
+pm2 start server.js --name chatwoot-zammad
+pm2 save
+```
+
+---
+
+# 10.2 Activar API en Zammad (Máquina 2)
+
+En Zammad:
+
+Admin → Integrations → API
+
+* Activar API
+* Crear nuevo Token
+* Copiar token
+* Pegar en server.js en Máquina 1
+
+---
+
+# 10.3 Configurar Webhook en Chatwoot (Máquina 1)
+
+En Chatwoot:
+
+Settings → Automation → Webhooks
+Crear nuevo:
+
+Nombre: Enviar a Zammad
+Evento: message_created
+Método: POST
+
+URL:
+
+```
+http://IP_MAQUINA_1:5000/api/chatwoot_ticket
+```
+
+⚠ No usar localhost si Chatwoot está en Docker.
+
+Guardar.
+
+---
+
+# 10.4 Flujo final
+
+```
+Redes Sociales / Web
+        ↓
+Chatwoot (Máquina 1 - Docker)
+        ↓ Webhook
+Servicio Node (Máquina 1)
+        ↓ API REST
+Zammad (Máquina 2)
+        ↓ Webhook
+Odoo (Máquina 1)
+```
+
+---
+
+# Consideraciones importantes
+
+### 1. Comportamiento actual
+
+Cada mensaje entrante crea un ticket nuevo en Zammad.
+
+---
+
+### 2. Mejora recomendada (producción)
+
+Para evitar múltiples tickets por conversación:
+
+* Guardar conversation.id como referencia externa
+* Si el ticket ya existe → añadir artículo
+* Si no existe → crear ticket
+
+---
+
+# Resultado
+
+Todos los mensajes entrantes de:
+
+* Web Widget
+* Instagram
+* Facebook
+* WhatsApp
+* Otros canales conectados a Chatwoot
+
+Generarán automáticamente tickets en Zammad, que posteriormente se sincronizan con Odoo mediante el punto 11.
+
+---
+
+Si quieres, puedo prepararte la versión avanzada donde:
+
+* Se mantiene 1 ticket por conversación
+* Se añaden respuestas como artículos
+* Se sincroniza estado abierto/cerrado
+
+Eso ya sería versión producción real.
+
 
 # 11. SINCRONIZAR ZAMMAD CON ODOO
 
