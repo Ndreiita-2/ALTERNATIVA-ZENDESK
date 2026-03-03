@@ -349,22 +349,37 @@ Dejar el bloque `server` así:
 
 ```nginx
 server {
-    listen 80;
-    server_name _;
+  listen 80;
+  listen [::]:80;
 
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
+  server_name _;
 
-    location /chat/ {
-        proxy_pass http://192.168.136.121:3000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
+  server_tokens off;
+
+  root /opt/zammad/public;
+
+  access_log /var/log/nginx/zammad.access.log;
+  error_log  /var/log/nginx/zammad.error.log;
+
+  client_max_body_size 50M;
+
+  location ~ ^/(assets/|robots.txt|humans.txt|favicon.ico|apple-touch-icon.png) {
+    expires max;
+  }
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  location /chat/ {
+    proxy_pass http://192.168.136.121:3000/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
 }
 ```
 
