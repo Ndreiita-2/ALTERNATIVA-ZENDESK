@@ -342,7 +342,7 @@ Arquitectura:
 Editar:
 
 ```bash
-sudo nano /etc/nginx/sites-available/zammad
+sudo nano /etc/nginx/sites-available/zammad.conf
 ```
 
 Dejar el bloque `server` así:
