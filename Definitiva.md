@@ -361,6 +361,63 @@ Chatwoot:
 https://random.trycloudflare.com
 ```
 
+# 🔐 CAMBIAR CONTRASEÑA DEL USUARIO ADMIN EN CHATWOOT
+
+## 1️⃣ Ir al directorio
+
+```bash
+cd /srv/chatwoot
+```
+
+---
+
+## 2️⃣ Entrar a la consola Rails
+
+```bash
+docker compose exec chatwoot bundle exec rails c
+```
+
+---
+
+## 3️⃣ Verificar usuario existente
+
+```ruby
+User.pluck(:email)
+```
+
+Debe mostrar:
+
+```
+["admin@chatwoot.local"]
+```
+
+---
+
+## 4️⃣ Cambiar contraseña
+
+```ruby
+user = User.find_by(email: "admin@chatwoot.local")
+user.password = "NuevaPassword123!"
+user.password_confirmation = "NuevaPassword123!"
+user.save!
+```
+
+---
+
+# ✅ Ahora puedes entrar con:
+
+Email:
+
+```
+admin@chatwoot.local
+```
+
+Contraseña:
+
+```
+NuevaPassword123!
+```
+
 ---
 
 # 🧩 RESULTADO FINAL DEL LAB
