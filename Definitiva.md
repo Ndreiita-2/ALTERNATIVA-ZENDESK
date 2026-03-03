@@ -132,37 +132,24 @@ sudo systemctl restart zammad
 
 ## 🔐 ACCESO LOCAL ZAMMAD
 
-Servidor local:
-
 ```
 http://192.168.136.120
-```
-
-Admin (creado en primer acceso):
-
-```
-admin@zammad.local
-Admin123!
 ```
 
 ---
 
 ## 🌍 Exponer Zammad con Ngrok
 
+Proyecto: **ngrok**
+
 Instalar:
 
 ```bash
 curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-
 echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-
 sudo apt update
 sudo apt install ngrok -y
 ```
-
-Crear cuenta en:
-
-[https://dashboard.ngrok.com/](https://dashboard.ngrok.com/)
 
 Configurar token:
 
@@ -170,23 +157,17 @@ Configurar token:
 ngrok config add-authtoken TU_TOKEN_AQUI
 ```
 
-Exponer servicio:
+Exponer:
 
 ```bash
 ngrok http 80
 ```
 
----
-
-## 🔗 ACCESO REMOTO ZAMMAD
-
-Ngrok generará algo como:
+Acceso remoto:
 
 ```
 https://abcd-1234.ngrok-free.app
 ```
-
-Ese será el acceso HTTPS público.
 
 ---
 
@@ -196,11 +177,13 @@ Servidor: **192.168.136.121**
 
 Proyecto oficial: **Chatwoot**
 
-## 1️⃣ Instalar Docker + Nginx + Certbot (Ubuntu 24.04 Noble)
+---
+
+## 1️⃣ Instalar Docker
 
 ```bash
 sudo apt update
-sudo apt install ca-certificates curl gnupg nginx certbot python3-certbot-nginx -y
+sudo apt install ca-certificates curl gnupg -y
 ```
 
 ```bash
@@ -210,17 +193,12 @@ sudo chmod a+r /etc/apt/keyrings/docker.gpg
 ```
 
 ```bash
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  noble stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu noble stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 ```
 
 ```bash
 sudo apt update
 sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
-```
-
-```bash
 sudo systemctl enable docker
 sudo systemctl start docker
 sudo usermod -aG docker $USER
@@ -300,173 +278,41 @@ docker compose up -d
 
 ## 🔐 ACCESO LOCAL CHATWOOT
 
-Servidor local:
-
 ```
 http://192.168.136.121:3000
 ```
 
-Admin manual:
-
-```bash
-docker compose exec chatwoot bundle exec rails console
-```
-
-```
-User.create!(
-  name: "Admin",
-  email: "admin@chatwoot.local",
-  password: "Admin123!",
-  password_confirmation: "Admin123!",
-  confirmed_at: Time.now
-)
-```
-
----
-# 🌍 EXPONER ZAMMAD Y CHATWOOT CON UN SOLO NGROK
-
-Servidor que expone al exterior: **192.168.136.120**
-
-Proyectos utilizados: **Zammad**, **Chatwoot**, **ngrok**
-
-Arquitectura:
-
-```
-/      → Zammad (127.0.0.1:3000)
-/chat  → Chatwoot (192.168.136.121:3000)
-```
-
 ---
 
-# 1️⃣ MODIFICAR NGINX EN ZAMMAD (192.168.136.120)
+# 🌍 EXPONER CHATWOOT CON CLOUDLARE TUNNEL (INDEPENDIENTE)
 
-Editar:
+Proyecto: **Cloudflare Tunnel**
 
-```bash
-sudo nano /etc/nginx/sites-available/zammad.conf
-```
-
-Reemplazar TODO el contenido por:
-
-```nginx
-upstream zammad-railsserver {
-  server 127.0.0.1:3000;
-}
-
-upstream zammad-websocket {
-  server 127.0.0.1:6042;
-}
-
-server {
-  listen 80;
-  listen [::]:80;
-
-  server_name _;
-
-  server_tokens off;
-
-  root /opt/zammad/public;
-
-  access_log /var/log/nginx/zammad.access.log;
-  error_log  /var/log/nginx/zammad.error.log;
-
-  client_max_body_size 50M;
-
-  location ~ ^/(assets/|robots.txt|humans.txt|favicon.ico|apple-touch-icon.png) {
-    expires max;
-  }
-
-  location /ws {
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "Upgrade";
-    proxy_set_header Host $http_host;
-    proxy_set_header CLIENT_IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_read_timeout 86400;
-    proxy_pass http://zammad-websocket;
-  }
-
-  location /cable {
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "Upgrade";
-    proxy_set_header Host $http_host;
-    proxy_set_header CLIENT_IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_read_timeout 86400;
-    proxy_pass http://zammad-railsserver;
-  }
-
-  location /chat/ {
-    proxy_pass http://192.168.136.121:3000/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Real-IP $remote_addr;
-  }
-
-  location / {
-    proxy_set_header Host $http_host;
-    proxy_set_header CLIENT_IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Forwarded-User "";
-
-    proxy_read_timeout 300;
-    proxy_pass http://zammad-railsserver;
-
-    gzip on;
-    gzip_types text/plain text/xml text/css image/svg+xml application/javascript application/x-javascript application/json application/xml;
-    gzip_proxied any;
-  }
-}
-```
-
-Aplicar:
+Instalar:
 
 ```bash
-sudo nginx -t
-sudo systemctl restart nginx
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloudflare.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloudflare.gpg] https://pkg.cloudflare.com/cloudflare-main $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare.list
+sudo apt update
+sudo apt install cloudflared -y
 ```
 
----
-
-# 2️⃣ AJUSTAR CHATWOOT (192.168.136.121)
-
-Editar:
+Login:
 
 ```bash
-cd /srv/chatwoot
-nano docker-compose.yml
+cloudflared tunnel login
 ```
 
-Modificar:
-
-```yaml
-FRONTEND_URL: "http://192.168.136.120/chat"
-```
-
-Recrear contenedores:
+Exponer:
 
 ```bash
-docker compose down
-docker compose up -d
+cloudflared tunnel --url http://localhost:3000
 ```
 
----
-
-# 3️⃣ LEVANTAR NGROK (SOLO EN 192.168.136.120)
-
-```bash
-ngrok http 80
-```
-
-Ngrok generará algo como:
+Generará algo como:
 
 ```
-https://abcd-1234.ngrok-free.app
+https://random.trycloudflare.com
 ```
 
 ---
@@ -476,20 +322,20 @@ https://abcd-1234.ngrok-free.app
 Zammad:
 
 ```
-https://abcd-1234.ngrok-free.app/
+https://abcd-1234.ngrok-free.app
 ```
 
 Chatwoot:
 
 ```
-https://abcd-1234.ngrok-free.app/chat
+https://random.trycloudflare.com
 ```
 
 ---
 
 # 🧩 RESULTADO FINAL DEL LAB
 
-| Servicio | IP              | Acceso público HTTPS                                                           |
-| -------- | --------------- | ------------------------------------------------------------------------------ |
-| Zammad   | 192.168.136.120 | [https://abcd-1234.ngrok-free.app](https://abcd-1234.ngrok-free.app)           |
-| Chatwoot | 192.168.136.121 | [https://abcd-1234.ngrok-free.app/chat](https://abcd-1234.ngrok-free.app/chat) |
+| Servicio | IP              | Acceso público HTTPS                                                 |
+| -------- | --------------- | -------------------------------------------------------------------- |
+| Zammad   | 192.168.136.120 | [https://abcd-1234.ngrok-free.app](https://abcd-1234.ngrok-free.app) |
+| Chatwoot | 192.168.136.121 | [https://random.trycloudflare.com](https://random.trycloudflare.com) |
