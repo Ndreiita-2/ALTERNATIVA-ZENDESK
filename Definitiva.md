@@ -1,13 +1,3 @@
-* IP estática (netplan con `routes`)
-* Nginx
-* DuckDNS
-* HTTPS con Certbot
-* Credenciales finales
-* Sin Docker para **Zammad**
-* Con Docker para **Chatwoot**
-
----
-
 # 🖥️ CONFIGURACIÓN DE RED (AMBOS SERVIDORES)
 
 | Zammad                  | Chatwoot                |
@@ -60,6 +50,10 @@ sudo netplan apply
 
 Servidor: **192.168.136.120**
 
+Proyecto oficial: **Zammad**
+
+---
+
 ## 1️⃣ Actualizar
 
 ```bash
@@ -69,10 +63,10 @@ sudo reboot
 
 ---
 
-## 2️⃣ Instalar dependencias + Nginx + Certbot
+## 2️⃣ Instalar dependencias + Nginx
 
 ```bash
-sudo apt install curl gnupg apt-transport-https ca-certificates lsb-release nginx certbot python3-certbot-nginx postgresql redis-server -y
+sudo apt install curl gnupg apt-transport-https ca-certificates lsb-release nginx postgresql redis-server -y
 ```
 
 ---
@@ -136,65 +130,7 @@ sudo systemctl restart zammad
 
 ---
 
-## 5️⃣ DuckDNS
-
-Dominio ejemplo:
-
-```
-zamand.duckdns.org
-```
-
----
-
-## 6️⃣ Nginx Reverse Proxy
-
-```bash
-sudo nano /etc/nginx/sites-available/zammad
-```
-
-```
-server {
-    listen 80;
-    server_name zamand.duckdns.org;
-
-    location /.well-known/acme-challenge/ {
-        root /var/www/html;
-    }
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-Activar:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/zammad /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
----
-
-## 7️⃣ HTTPS
-
-```bash
-sudo certbot --nginx -d zamand.duckdns.org
-```
-
----
-
-## 🔐 ACCESO FINAL ZAMMAD
-
-Web:
-
-```
-https://zamand.duckdns.org
-```
+## 🔐 ACCESO LOCAL ZAMMAD
 
 Servidor local:
 
@@ -205,9 +141,52 @@ http://192.168.136.120
 Admin (creado en primer acceso):
 
 ```
-admin@zamand.duckdns.org
+admin@zammad.local
 Admin123!
 ```
+
+---
+
+## 🌍 Exponer Zammad con Ngrok
+
+Instalar:
+
+```bash
+curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+
+echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+
+sudo apt update
+sudo apt install ngrok -y
+```
+
+Crear cuenta en:
+
+[https://dashboard.ngrok.com/](https://dashboard.ngrok.com/)
+
+Configurar token:
+
+```bash
+ngrok config add-authtoken TU_TOKEN_AQUI
+```
+
+Exponer servicio:
+
+```bash
+ngrok http 80
+```
+
+---
+
+## 🔗 ACCESO REMOTO ZAMMAD
+
+Ngrok generará algo como:
+
+```
+https://abcd-1234.ngrok-free.app
+```
+
+Ese será el acceso HTTPS público.
 
 ---
 
@@ -215,13 +194,15 @@ Admin123!
 
 Servidor: **192.168.136.121**
 
+Proyecto oficial: **Chatwoot**
+
 ---
 
-## 1️⃣ Instalar Docker + Nginx + Certbot
+## 1️⃣ Instalar Docker + Nginx
 
 ```bash
 sudo apt update
-sudo apt install docker.io docker-compose-plugin nginx certbot python3-certbot-nginx -y
+sudo apt install docker.io docker-compose-plugin nginx -y
 sudo systemctl enable docker
 sudo systemctl start docker
 sudo usermod -aG docker $USER
@@ -272,7 +253,7 @@ services:
     environment:
       RAILS_ENV: production
       SECRET_KEY_BASE: "CAMBIAR_POR_CLAVE"
-      FRONTEND_URL: "https://chatand.duckdns.org"
+      FRONTEND_URL: "http://192.168.136.121:3000"
       REDIS_URL: redis://redis:6379
       POSTGRES_HOST: postgres
       POSTGRES_USERNAME: chatwoot
@@ -299,59 +280,7 @@ docker compose up -d
 
 ---
 
-## 4️⃣ DuckDNS
-
-Dominio ejemplo:
-
-```
-chatand.duckdns.org
-```
-
----
-
-## 5️⃣ Nginx Reverse Proxy
-
-```bash
-sudo nano /etc/nginx/sites-available/chatwoot
-```
-
-```
-server {
-    server_name chatand.duckdns.org;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Activar:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/chatwoot /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
----
-
-## 6️⃣ HTTPS
-
-```bash
-sudo certbot --nginx -d chatand.duckdns.org
-```
-
----
-
-## 🔐 ACCESO FINAL CHATWOOT
-
-Web:
-
-```
-https://chatand.duckdns.org
-```
+## 🔐 ACCESO LOCAL CHATWOOT
 
 Servidor local:
 
@@ -368,7 +297,7 @@ docker compose exec chatwoot bundle exec rails console
 ```
 User.create!(
   name: "Admin",
-  email: "admin@chatand.duckdns.org",
+  email: "admin@chatwoot.local",
   password: "Admin123!",
   password_confirmation: "Admin123!",
   confirmed_at: Time.now
@@ -377,11 +306,43 @@ User.create!(
 
 ---
 
+## 🌍 Exponer Chatwoot con Ngrok
+
+En el servidor 192.168.136.121:
+
+```bash
+ngrok http 3000
+```
+
+---
+
+## 🔗 ACCESO REMOTO CHATWOOT
+
+Ngrok generará algo como:
+
+```
+https://xyz-5678.ngrok-free.app
+```
+
+Ese será el acceso HTTPS público.
+
+---
+
 # 🧩 RESULTADO FINAL DEL LAB
 
-| Servicio | IP              | Dominio HTTPS                                                                  |
-| -------- | --------------- | ------------------------------------------------------------------------------ |
-| Zammad   | 192.168.136.120 | [https://soporte-midominio.duckdns.org](https://zamand.duckdns.org) |
-| Chatwoot | 192.168.136.121 | [https://chat-midominio.duckdns.org](https://chatand.duckdns.org)       |
+| Servicio | IP              | Acceso público HTTPS (Ngrok)                                         |
+| -------- | --------------- | -------------------------------------------------------------------- |
+| Zammad   | 192.168.136.120 | [https://abcd-1234.ngrok-free.app](https://abcd-1234.ngrok-free.app) |
+| Chatwoot | 192.168.136.121 | [https://xyz-5678.ngrok-free.app](https://xyz-5678.ngrok-free.app)   |
+
+---
+
+⚠️ Nota:
+
+* La URL cambia cada vez que reinicias ngrok (plan gratuito).
+* No necesitas router.
+* No necesitas IP pública.
+* No necesitas DuckDNS.
+* No necesitas Certbot.
 
 ---
