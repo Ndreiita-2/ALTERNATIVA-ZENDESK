@@ -17,7 +17,7 @@
 Archivo netplan en ambos:
 
 ```bash
-sudo nano /etc/netplan/50-installer-config.yaml
+sudo nano /etc/netplan/50-cloud-init.yaml
 ```
 
 ---
