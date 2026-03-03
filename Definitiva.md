@@ -324,9 +324,122 @@ User.create!(
 
 ---
 
+# 🌍 EXPONER ZAMMAD Y CHATWOOT CON UN SOLO NGROK
+
+Servidor que expone al exterior: **192.168.136.120 (Zammad)**
+
+Proyecto utilizado: **Ngrok**
+
+Arquitectura:
+
+* `/` → Zammad (local 127.0.0.1:3000)
+* `/chat` → Chatwoot (192.168.136.121:3000)
+
+---
+
+## 1️⃣ Modificar Nginx en Zammad
+
+Editar:
+
+```bash
+sudo nano /etc/nginx/sites-available/zammad
+```
+
+Dejar el bloque `server` así:
+
+```nginx
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /chat/ {
+        proxy_pass http://192.168.136.121:3000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+Aplicar cambios:
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+---
+
+## 2️⃣ Ajustar Chatwoot para trabajar bajo /chat
+
+En el servidor **192.168.136.121**
+
+Editar:
+
+```bash
+cd /srv/chatwoot
+nano docker-compose.yml
+```
+
+Modificar la variable:
+
+```yaml
+FRONTEND_URL: "http://192.168.136.120/chat"
+```
+
+Recrear contenedores:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+---
+
+## 3️⃣ Levantar túnel Ngrok (solo en Zammad)
+
+En **192.168.136.120**
+
+```bash
+ngrok http 80
+```
+
+Ngrok generará algo como:
+
+```
+https://abcd-1234.ngrok-free.app
+```
+
+---
+
+## 🔗 ACCESO REMOTO FINAL
+
+Zammad:
+
+```
+https://abcd-1234.ngrok-free.app/
+```
+
+Chatwoot:
+
+```
+https://abcd-1234.ngrok-free.app/chat
+```
+
+---
+
 # 🧩 RESULTADO FINAL DEL LAB
 
-| Servicio | IP              | Acceso público HTTPS (Ngrok)                                         |
-| -------- | --------------- | -------------------------------------------------------------------- |
-| Zammad   | 192.168.136.120 | [https://abcd-1234.ngrok-free.app](https://abcd-1234.ngrok-free.app) |
-| Chatwoot | 192.168.136.121 | Acceso local únicamente por red interna                              |
+| Servicio | IP              | Acceso público HTTPS (Ngrok)                                                   |
+| -------- | --------------- | ------------------------------------------------------------------------------ |
+| Zammad   | 192.168.136.120 | [https://abcd-1234.ngrok-free.app](https://abcd-1234.ngrok-free.app)           |
+| Chatwoot | 192.168.136.121 | [https://abcd-1234.ngrok-free.app/chat](https://abcd-1234.ngrok-free.app/chat) |
+
+---
