@@ -282,28 +282,58 @@ docker compose up -d
 http://192.168.136.121:3000
 ```
 
----
-
 # 🌍 EXPONER CHATWOOT CON CLOUDLARE TUNNEL (INDEPENDIENTE)
 
 Proyecto: **Cloudflare Tunnel**
 
+---
+
+## 📦 Instalar cloudflared (Ubuntu 24.04 / 22.04)
+
+Eliminar repos anteriores si existen:
+
+```bash
+sudo rm -f /etc/apt/sources.list.d/cloudflare.list
+sudo apt update
+```
+
+Descargar paquete oficial:
+
+```bash
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+```
+
 Instalar:
 
 ```bash
-curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloudflare.gpg
-echo "deb [signed-by=/usr/share/keyrings/cloudflare.gpg] https://pkg.cloudflare.com/cloudflare-main $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare.list
-sudo apt update
-sudo apt install cloudflared -y
+sudo dpkg -i cloudflared-linux-amd64.deb
 ```
 
-Login:
+Si hay dependencias pendientes:
+
+```bash
+sudo apt -f install -y
+```
+
+Verificar:
+
+```bash
+cloudflared --version
+```
+
+---
+
+## 🔐 Login (opcional para túnel rápido no persistente no es necesario)
 
 ```bash
 cloudflared tunnel login
 ```
 
-Exponer:
+---
+
+## 🚀 Exponer Chatwoot
+
+En el servidor donde está Chatwoot:
 
 ```bash
 cloudflared tunnel --url http://localhost:3000
@@ -312,7 +342,7 @@ cloudflared tunnel --url http://localhost:3000
 Generará algo como:
 
 ```
-https://random.trycloudflare.com
+https://random-name.trycloudflare.com
 ```
 
 ---
