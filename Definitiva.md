@@ -169,6 +169,8 @@ Acceso remoto:
 https://abcd-1234.ngrok-free.app
 ```
 
+Contraseña: adminAA123?
+
 ---
 
 # 🚀 INSTALACIÓN CHATWOOT (DOCKER)
