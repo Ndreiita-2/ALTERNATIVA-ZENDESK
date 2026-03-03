@@ -345,6 +345,150 @@ Generará algo como:
 https://random-name.trycloudflare.com
 ```
 
+ENESPERA
+
+Reemplaza **todo** tu bloque por este:
+
+---
+
+# 🌍 EXPONER CHATWOOT CON DOMINIO FIJO (CLOUDFLARE GRATIS)
+
+Proyecto: **Cloudflare Tunnel**
+
+---
+
+## 📦 Instalar cloudflared (Ubuntu 24.04 / 22.04)
+
+```bash
+sudo rm -f /etc/apt/sources.list.d/cloudflare.list
+sudo apt update
+
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+sudo apt -f install -y
+
+cloudflared --version
+```
+
+---
+
+## 🔐 1️⃣ Login en Cloudflare
+
+```bash
+cloudflared tunnel login
+```
+
+Autoriza tu dominio en el navegador.
+
+---
+
+## 🧱 2️⃣ Crear túnel con nombre
+
+```bash
+cloudflared tunnel create chatwoot
+```
+
+Guarda el **Tunnel ID** que aparece.
+
+---
+
+## ⚙️ 3️⃣ Crear configuración
+
+```bash
+sudo nano /etc/cloudflared/config.yml
+```
+
+Contenido:
+
+```yaml
+tunnel: chatwoot
+credentials-file: /home/USUARIO/.cloudflared/TUNNEL-ID.json
+
+ingress:
+  - hostname: chat.tudominio.com
+    service: http://localhost:3000
+  - service: http_status:404
+```
+
+Reemplazar:
+
+* `USUARIO` por tu usuario Linux
+* `TUNNEL-ID` por el ID generado
+* `chat.tudominio.com` por tu subdominio real
+
+---
+
+## 🌐 4️⃣ Crear DNS automático
+
+```bash
+cloudflared tunnel route dns chatwoot chat.tudominio.com
+```
+
+---
+
+## 🚀 5️⃣ Ejecutar túnel
+
+```bash
+cloudflared tunnel run chatwoot
+```
+
+Probar acceso:
+
+```
+https://chat.tudominio.com
+```
+
+---
+
+## 🔄 6️⃣ Dejar como servicio permanente
+
+```bash
+sudo cloudflared service install
+sudo systemctl enable cloudflared
+sudo systemctl start cloudflared
+```
+
+---
+
+## 🔧 7️⃣ Ajustar Chatwoot
+
+```bash
+cd /srv/chatwoot
+nano .env
+```
+
+Modificar:
+
+```
+FRONTEND_URL=https://chat.tudominio.com
+```
+
+Reiniciar:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+---
+
+## ✅ RESULTADO FINAL
+
+Chatwoot disponible en:
+
+```
+https://chat.tudominio.com
+```
+
+URL fija
+HTTPS automático
+Gratis
+Persistente
+Sin depender de terminal abierta
+
+
+ENESPERA
+
 ---
 
 # 🔗 ACCESO REMOTO FINAL
