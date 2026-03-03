@@ -323,21 +323,22 @@ User.create!(
 ```
 
 ---
-
 # 🌍 EXPONER ZAMMAD Y CHATWOOT CON UN SOLO NGROK
 
-Servidor que expone al exterior: **192.168.136.120 (Zammad)**
+Servidor que expone al exterior: **192.168.136.120**
 
-Proyecto utilizado: **Ngrok**
+Proyectos utilizados: **Zammad**, **Chatwoot**, **ngrok**
 
 Arquitectura:
 
-* `/` → Zammad (local 127.0.0.1:3000)
-* `/chat` → Chatwoot (192.168.136.121:3000)
+```
+/      → Zammad (127.0.0.1:3000)
+/chat  → Chatwoot (192.168.136.121:3000)
+```
 
 ---
 
-## 1️⃣ Modificar Nginx en Zammad
+# 1️⃣ MODIFICAR NGINX EN ZAMMAD (192.168.136.120)
 
 Editar:
 
@@ -345,9 +346,17 @@ Editar:
 sudo nano /etc/nginx/sites-available/zammad.conf
 ```
 
-Dejar el bloque `server` así:
+Reemplazar TODO el contenido por:
 
 ```nginx
+upstream zammad-railsserver {
+  server 127.0.0.1:3000;
+}
+
+upstream zammad-websocket {
+  server 127.0.0.1:6042;
+}
+
 server {
   listen 80;
   listen [::]:80;
@@ -367,11 +376,28 @@ server {
     expires max;
   }
 
-  location / {
-    proxy_pass http://127.0.0.1:3000;
-    proxy_set_header Host $host;
+  location /ws {
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $http_host;
+    proxy_set_header CLIENT_IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Real-IP $remote_addr;
+    proxy_read_timeout 86400;
+    proxy_pass http://zammad-websocket;
+  }
+
+  location /cable {
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $http_host;
+    proxy_set_header CLIENT_IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 86400;
+    proxy_pass http://zammad-railsserver;
   }
 
   location /chat/ {
@@ -380,10 +406,25 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_set_header X-Real-IP $remote_addr;
   }
+
+  location / {
+    proxy_set_header Host $http_host;
+    proxy_set_header CLIENT_IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-User "";
+
+    proxy_read_timeout 300;
+    proxy_pass http://zammad-railsserver;
+
+    gzip on;
+    gzip_types text/plain text/xml text/css image/svg+xml application/javascript application/x-javascript application/json application/xml;
+    gzip_proxied any;
+  }
 }
 ```
 
-Aplicar cambios:
+Aplicar:
 
 ```bash
 sudo nginx -t
@@ -392,9 +433,7 @@ sudo systemctl restart nginx
 
 ---
 
-## 2️⃣ Ajustar Chatwoot para trabajar bajo /chat
-
-En el servidor **192.168.136.121**
+# 2️⃣ AJUSTAR CHATWOOT (192.168.136.121)
 
 Editar:
 
@@ -403,7 +442,7 @@ cd /srv/chatwoot
 nano docker-compose.yml
 ```
 
-Modificar la variable:
+Modificar:
 
 ```yaml
 FRONTEND_URL: "http://192.168.136.120/chat"
@@ -418,9 +457,7 @@ docker compose up -d
 
 ---
 
-## 3️⃣ Levantar túnel Ngrok (solo en Zammad)
-
-En **192.168.136.120**
+# 3️⃣ LEVANTAR NGROK (SOLO EN 192.168.136.120)
 
 ```bash
 ngrok http 80
@@ -434,7 +471,7 @@ https://abcd-1234.ngrok-free.app
 
 ---
 
-## 🔗 ACCESO REMOTO FINAL
+# 🔗 ACCESO REMOTO FINAL
 
 Zammad:
 
@@ -452,9 +489,7 @@ https://abcd-1234.ngrok-free.app/chat
 
 # 🧩 RESULTADO FINAL DEL LAB
 
-| Servicio | IP              | Acceso público HTTPS (Ngrok)                                                   |
+| Servicio | IP              | Acceso público HTTPS                                                           |
 | -------- | --------------- | ------------------------------------------------------------------------------ |
 | Zammad   | 192.168.136.120 | [https://abcd-1234.ngrok-free.app](https://abcd-1234.ngrok-free.app)           |
 | Chatwoot | 192.168.136.121 | [https://abcd-1234.ngrok-free.app/chat](https://abcd-1234.ngrok-free.app/chat) |
-
----
