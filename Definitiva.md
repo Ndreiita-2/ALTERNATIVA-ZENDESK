@@ -317,9 +317,9 @@ Debe mostrar:
 ## 4️⃣ Cambiar contraseña
 
 ```ruby
-user = User.find_by(email: "admin@chatwoot.local")
-user.password = "NuevaPassword123!"
-user.password_confirmation = "NuevaPassword123!"
+user = User.find_by(email: "andrea.chamorro@creatorsco.com")
+user.password = "Chatwoot1?"
+user.password_confirmation = "Chatwoot1?"
 user.save!
 ```
 
@@ -330,13 +330,13 @@ user.save!
 Email:
 
 ```
-admin@chatwoot.local
+andrea.chamorro@creatorsco.com
 ```
 
 Contraseña:
 
 ```
-NuevaPassword123!
+Chatwoot1?
 ```
 
 ---
