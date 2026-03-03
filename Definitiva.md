@@ -326,7 +326,24 @@ User.create!(
 
 ## 🌍 Exponer Chatwoot con Ngrok
 
-En el servidor 192.168.136.121:
+Instalar:
+
+```bash
+curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+
+echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+
+sudo apt update
+sudo apt install ngrok -y
+```
+
+Configurar token:
+
+```bash
+ngrok config add-authtoken TU_TOKEN_AQUI
+```
+
+Exponer servicio:
 
 ```bash
 ngrok http 3000
