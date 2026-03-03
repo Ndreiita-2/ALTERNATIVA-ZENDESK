@@ -324,60 +324,9 @@ User.create!(
 
 ---
 
-## 🌍 Exponer Chatwoot con Ngrok
-
-Instalar:
-
-```bash
-curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-
-echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-
-sudo apt update
-sudo apt install ngrok -y
-```
-
-Configurar token:
-
-```bash
-ngrok config add-authtoken TU_TOKEN_AQUI
-```
-
-Exponer servicio:
-
-```bash
-ngrok http 3000
-```
-
----
-
-## 🔗 ACCESO REMOTO CHATWOOT
-
-Ngrok generará algo como:
-
-```
-https://xyz-5678.ngrok-free.app
-```
-
-Ese será el acceso HTTPS público.
-
----
-
 # 🧩 RESULTADO FINAL DEL LAB
 
 | Servicio | IP              | Acceso público HTTPS (Ngrok)                                         |
 | -------- | --------------- | -------------------------------------------------------------------- |
 | Zammad   | 192.168.136.120 | [https://abcd-1234.ngrok-free.app](https://abcd-1234.ngrok-free.app) |
-| Chatwoot | 192.168.136.121 | [https://xyz-5678.ngrok-free.app](https://xyz-5678.ngrok-free.app)   |
-
----
-
-⚠️ Nota:
-
-* La URL cambia cada vez que reinicias ngrok (plan gratuito).
-* No necesitas router.
-* No necesitas IP pública.
-* No necesitas DuckDNS.
-* No necesitas Certbot.
-
----
+| Chatwoot | 192.168.136.121 | Acceso local únicamente por red interna                              |
