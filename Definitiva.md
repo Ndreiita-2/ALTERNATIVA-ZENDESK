@@ -309,7 +309,7 @@ User.pluck(:email)
 Debe mostrar:
 
 ```
-["admin@chatwoot.local"]
+["andrea.chamorro@creatorsco.com"]
 ```
 
 ---
@@ -318,8 +318,8 @@ Debe mostrar:
 
 ```ruby
 user = User.find_by(email: "andrea.chamorro@creatorsco.com")
-user.password = "Chatwoot1?"
-user.password_confirmation = "Chatwoot1?"
+user.password = "Pruebas1?"
+user.password_confirmation = "Pruebas1?"
 user.save!
 ```
 
@@ -336,7 +336,7 @@ andrea.chamorro@creatorsco.com
 Contraseña:
 
 ```
-Chatwoot1?
+Pruebas1?
 ```
 
 ---
