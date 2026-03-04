@@ -758,6 +758,8 @@ Debe decir:
 
 En nginx añade:
 
+En zammad.conf, dentro de servers.
+
 ```nginx
 location /webhook/chatwoot {
     proxy_pass http://localhost:4000/chatwoot;
