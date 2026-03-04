@@ -558,24 +558,6 @@ Esto asegura que:
 | Zammad   | 192.168.136.120 | [https://polygalaceous-alaysia-unsilently.ngrok-free.dev/](https://polygalaceous-alaysia-unsilently.ngrok-free.dev/) |
 | Chatwoot | 192.168.136.121 | [http://192.168.136.121:3000/](http://192.168.136.121:3000/) |
 
-Tienes razón 👌 — ahora vamos a hacerlo completo de verdad:
-
-Te voy a dejar:
-
-1️⃣ Creación del middleware desde cero con Node
-2️⃣ Cómo conectarlo con Zammad
-3️⃣ Cómo conectarlo con Chatwoot
-4️⃣ Cómo integrarlo en tu esquema con ngrok + subruta
-5️⃣ Checklist de qué cambiar cuando cambie ngrok
-
-Todo adaptado a tu arquitectura con:
-
-* Zammad
-* Chatwoot
-* Microsoft Azure
-
----
-
 # 🧱 PARTE 1 — Crear el middleware Node.js desde cero
 
 ## 1️⃣ Instalar Node
