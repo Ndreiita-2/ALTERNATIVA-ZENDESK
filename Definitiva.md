@@ -341,7 +341,7 @@ Contraseña:
 Pruebas1?
 ```
 
-## 5 Archivo PID bloqueado después de reiniciar, solución:
+# Archivo PID bloqueado después de reiniciar, solución:
 ```
 docker compose down
 ```
@@ -349,6 +349,207 @@ docker compose down
 docker compose up -d --force-recreate
 ```
 ---
+
+# Integración de Microsoft 365 con Zammad mediante OAuth (IMAP y SMTP)
+
+## 1. Requisitos previos
+
+* Cuenta activa en Microsoft 365
+* Acceso de administrador en Azure
+* Acceso administrador en Zammad
+* Dominio verificado en Microsoft 365
+* Zammad accesible por HTTPS (dominio público o túnel como ngrok)
+
+---
+
+# 2. Configuración inicial en Zammad (URL pública correcta)
+
+Antes de crear la aplicación en Azure, es obligatorio que Zammad tenga configurada su URL pública correcta.
+
+## 2.1 Cambiar la URL base del sistema
+
+Ir a:
+
+Admin → Sistema → Configuración → URL (o Base URL)
+
+Cambiar la dirección IP interna (por ejemplo 192.168.x.x) por el dominio público, por ejemplo:
+
+```
+https://subdominio.ngrok-free.dev
+```
+
+Guardar los cambios.
+
+Esto es imprescindible porque Zammad utilizará esta URL para construir automáticamente la URI de redirección OAuth.
+
+---
+
+# 3. Creación de la aplicación en Azure
+
+## 3.1 Acceder al portal
+
+1. Ir a https://portal.azure.com
+2. Entrar en Microsoft Entra ID
+3. Seleccionar Registros de aplicaciones
+4. Pulsar Nuevo registro
+
+---
+
+## 3.2 Registrar la aplicación
+
+Configurar:
+
+* Nombre: Zammad Mail Integration
+* Tipos de cuenta compatibles: Cuentas en este directorio organizativo solamente
+* URI de redirección:
+
+  * Tipo: Web
+  * URI:
+
+```
+https://TU_DOMINIO_ZAMMAD/api/v1/external_credentials/microsoft365/callback
+```
+
+Ejemplo con ngrok:
+
+```
+https://subdominio.ngrok-free.dev/api/v1/external_credentials/microsoft365/callback
+```
+
+Crear la aplicación.
+
+---
+
+## 3.3 Obtener identificadores
+
+Copiar:
+
+* Id. de aplicación (cliente)
+* Id. de directorio (inquilino)
+
+---
+
+# 4. Crear secreto del cliente
+
+1. Ir a Certificados y secretos
+2. Nuevo secreto de cliente
+3. Definir duración
+4. Crear
+
+Copiar el valor del secreto inmediatamente.
+
+---
+
+# 5. Configurar permisos API
+
+Ir a:
+
+Permisos de API → Agregar un permiso
+
+Seleccionar Microsoft Graph → Permisos delegados
+
+Añadir:
+
+* IMAP.AccessAsUser.All
+* SMTP.Send
+* offline_access
+* User.Read
+
+Guardar.
+
+Después:
+
+Pulsar Conceder consentimiento de administrador.
+
+---
+
+# 6. Configuración en Zammad
+
+Ir a:
+
+Admin → Channels → Email
+
+Seleccionar:
+
+Microsoft 365 IMAP Email
+
+---
+
+## 6.1 Configurar App
+
+Pulsar Configurar App e introducir:
+
+* Tenant ID
+* Client ID
+* Client Secret
+
+Guardar.
+
+---
+
+## 6.2 Añadir cuenta
+
+Pulsar Añadir cuenta.
+
+Iniciar sesión con la cuenta de Microsoft 365 y autorizar.
+
+Debe aparecer:
+
+* Entrante: activo
+* Saliente: activo
+
+---
+
+# 7. Configuración correcta del canal entrante
+
+Editar el canal entrante y verificar:
+
+* Grupo de destino: el deseado
+* Directorio: Inbox
+* Mantener mensajes en el servidor: yes
+
+Guardar.
+
+Esto garantiza que los correos permanezcan en el buzón tras ser procesados.
+
+---
+
+# 8. Verificación del canal saliente
+
+Confirmar que el canal saliente esté activo.
+
+Esto asegura que:
+
+* Los correos enviados desde Zammad salgan desde la cuenta real
+* Aparezcan en la carpeta Enviados del buzón
+
+---
+
+# 9. Prueba de funcionamiento
+
+1. Enviar un correo de prueba a la cuenta configurada.
+2. Verificar:
+
+   * El correo aparece en Outlook Web.
+   * Se crea un ticket en Zammad.
+3. Responder desde Zammad.
+4. Verificar:
+
+   * El destinatario recibe el mensaje.
+   * El correo aparece en Enviados en Outlook.
+
+---
+
+# 10. Recomendaciones para producción
+
+* Utilizar siempre HTTPS.
+* Si se usa ngrok, actualizar la URI de redirección en Azure cuando cambie el subdominio.
+* Supervisar la caducidad del secreto de cliente.
+* Realizar copias de seguridad periódicas.
+* Evitar reglas automáticas de borrado en el buzón.
+
+---
+
 
 # 🧩 RESULTADO FINAL DEL LAB
 
