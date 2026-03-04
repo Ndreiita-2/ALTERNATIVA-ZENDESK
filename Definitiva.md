@@ -341,7 +341,7 @@ Contraseña:
 Pruebas1?
 ```
 
-Archivo PID bloqueado después de reiniciar, solución:
+## 5 Archivo PID bloqueado después de reiniciar, solución:
 ```
 docker compose down
 ```
