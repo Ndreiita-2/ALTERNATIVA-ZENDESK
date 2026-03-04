@@ -341,6 +341,13 @@ Contraseña:
 Pruebas1?
 ```
 
+Archivo PID bloqueado después de reiniciar, solución:
+```
+docker compose down
+```
+```
+docker compose up -d --force-recreate
+```
 ---
 
 # 🧩 RESULTADO FINAL DEL LAB
