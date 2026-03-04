@@ -557,3 +557,297 @@ Esto asegura que:
 | -------- | --------------- | -------------------------------------------------------------------- |
 | Zammad   | 192.168.136.120 | [https://polygalaceous-alaysia-unsilently.ngrok-free.dev/](https://polygalaceous-alaysia-unsilently.ngrok-free.dev/) |
 | Chatwoot | 192.168.136.121 | [http://192.168.136.121:3000/](http://192.168.136.121:3000/) |
+
+Tienes razón 👌 — ahora vamos a hacerlo completo de verdad:
+
+Te voy a dejar:
+
+1️⃣ Creación del middleware desde cero con Node
+2️⃣ Cómo conectarlo con Zammad
+3️⃣ Cómo conectarlo con Chatwoot
+4️⃣ Cómo integrarlo en tu esquema con ngrok + subruta
+5️⃣ Checklist de qué cambiar cuando cambie ngrok
+
+Todo adaptado a tu arquitectura con:
+
+* Zammad
+* Chatwoot
+* Microsoft Azure
+
+---
+
+# 🧱 PARTE 1 — Crear el middleware Node.js desde cero
+
+## 1️⃣ Instalar Node
+
+En el servidor donde está Zammad:
+
+```bash
+node -v
+```
+
+Si no está instalado:
+
+```bash
+sudo apt update
+sudo apt install nodejs npm -y
+```
+
+---
+
+## 2️⃣ Crear carpeta del middleware
+
+```bash
+mkdir chat-integration
+cd chat-integration
+npm init -y
+```
+
+---
+
+## 3️⃣ Instalar dependencias
+
+```bash
+npm install express axios dotenv
+```
+
+---
+
+## 4️⃣ Crear archivo `.env`
+
+```bash
+nano .env
+```
+
+Contenido:
+
+```env
+PORT=4000
+
+ZAMMAD_URL=http://localhost:3000
+ZAMMAD_TOKEN=TU_TOKEN_ZAMMAD
+
+CHATWOOT_URL=https://chatwoot.tudominio.com
+CHATWOOT_TOKEN=TU_TOKEN_CHATWOOT
+ACCOUNT_ID=1
+```
+
+Guardar.
+
+---
+
+## 5️⃣ Crear `index.js`
+
+```bash
+nano index.js
+```
+
+Pega esto:
+
+```js
+import express from "express";
+import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const app = express();
+app.use(express.json());
+
+/*
+=============================
+1️⃣ Chatwoot → Zammad
+=============================
+*/
+app.post("/chatwoot", async (req, res) => {
+
+  if (req.body.event !== "conversation_created") {
+    return res.sendStatus(200);
+  }
+
+  const conversation = req.body.conversation;
+  const contact = conversation.contact;
+
+  try {
+    await axios.post(
+      `${process.env.ZAMMAD_URL}/api/v1/tickets`,
+      {
+        title: `Chat #${conversation.id} - ${contact.name}`,
+        group: "Users",
+        customer: contact.email || "chatwoot@local",
+        article: {
+          subject: "Nuevo mensaje desde Chatwoot",
+          body: conversation.messages?.[0]?.content || "Nuevo chat iniciado",
+          type: "note",
+          internal: false
+        },
+        custom_fields: {
+          chatwoot_id: conversation.id
+        }
+      },
+      {
+        headers: {
+          Authorization: `Token token=${process.env.ZAMMAD_TOKEN}`
+        }
+      }
+    );
+
+    console.log("✅ Ticket creado en Zammad");
+    res.sendStatus(200);
+
+  } catch (error) {
+    console.error("❌ Error creando ticket:", error.response?.data || error.message);
+    res.sendStatus(500);
+  }
+});
+
+
+/*
+=============================
+2️⃣ Zammad → Chatwoot
+=============================
+*/
+app.post("/zammad", async (req, res) => {
+
+  const article = req.body.article;
+  const ticket = req.body.ticket;
+
+  if (!article || article.internal) return res.sendStatus(200);
+
+  const chatwootId = ticket.custom_fields?.chatwoot_id;
+  if (!chatwootId) return res.sendStatus(200);
+
+  try {
+    await axios.post(
+      `${process.env.CHATWOOT_URL}/api/v1/accounts/${process.env.ACCOUNT_ID}/conversations/${chatwootId}/messages`,
+      {
+        content: article.body,
+        message_type: "outgoing"
+      },
+      {
+        headers: {
+          api_access_token: process.env.CHATWOOT_TOKEN
+        }
+      }
+    );
+
+    console.log("📨 Respuesta enviada a Chatwoot");
+    res.sendStatus(200);
+
+  } catch (error) {
+    console.error("❌ Error enviando a Chatwoot:", error.response?.data || error.message);
+    res.sendStatus(500);
+  }
+});
+
+
+app.listen(process.env.PORT, () => {
+  console.log(`🚀 Middleware corriendo en puerto ${process.env.PORT}`);
+});
+```
+
+---
+
+## 6️⃣ Ajustar package.json para ES Modules
+
+Editar `package.json` y añadir:
+
+```json
+"type": "module"
+```
+
+---
+
+## 7️⃣ Ejecutar middleware
+
+```bash
+node index.js
+```
+
+Debe decir:
+
+```
+🚀 Middleware corriendo en puerto 4000
+```
+
+---
+
+# 🧱 PARTE 2 — Integrarlo con tu reverse proxy
+
+En nginx añade:
+
+```nginx
+location /webhook/chatwoot {
+    proxy_pass http://localhost:4000/chatwoot;
+}
+
+location /webhook/zammad {
+    proxy_pass http://localhost:4000/zammad;
+}
+```
+
+Reiniciar nginx:
+
+```bash
+sudo systemctl restart nginx
+```
+
+Ahora:
+
+```
+https://subdominio.ngrok-free.dev/webhook/chatwoot
+https://subdominio.ngrok-free.dev/webhook/zammad
+```
+
+---
+
+# 🧱 PARTE 3 — Configuración en Chatwoot
+
+En Chatwoot:
+
+Settings → Integrations → Webhooks
+
+Evento:
+
+```
+conversation_created
+```
+
+URL:
+
+```
+https://subdominio.ngrok-free.dev/webhook/chatwoot
+```
+
+---
+
+# 🧱 PARTE 4 — Configuración en Zammad
+
+En Zammad:
+
+Admin → Webhooks → Nuevo
+
+Evento:
+
+```
+Ticket updated
+```
+
+URL:
+
+```
+https://subdominio.ngrok-free.dev/webhook/zammad
+```
+
+---
+
+# 🔁 CUANDO CAMBIE NGROK
+
+Cada vez que cambie la URL:
+
+### Cambiar:
+
+1️⃣ Base URL en Zammad
+2️⃣ Redirect URI en Azure
+3️⃣ Webhook en Chatwoot
+4️⃣ Webhook en Zammad
