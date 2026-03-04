@@ -345,7 +345,7 @@ Pruebas1?
 
 # 🧩 RESULTADO FINAL DEL LAB
 
-| Servicio | IP              | Acceso público HTTPS                                                 |
+| Servicio | IP              | Acceso                                                               |
 | -------- | --------------- | -------------------------------------------------------------------- |
-| Zammad   | 192.168.136.120 | [https://abcd-1234.ngrok-free.app](https://abcd-1234.ngrok-free.app) |
-| Chatwoot | 192.168.136.121 |  |
+| Zammad   | 192.168.136.120 | [https://polygalaceous-alaysia-unsilently.ngrok-free.dev/](https://polygalaceous-alaysia-unsilently.ngrok-free.dev/) |
+| Chatwoot | 192.168.136.121 | [http://192.168.136.121:3000/](http://192.168.136.121:3000/) |
