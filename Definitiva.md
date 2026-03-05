@@ -1222,3 +1222,25 @@ Si quieres, ahora podemos hacer:
 
 Tú decides 🚀
 
+-------------------------------TOKEN INVALID AL REINICIAR------------------------------------------------
+2️⃣ Cambiar la Base URL manualmente
+
+Ahora pega esto:
+```
+Setting.set('fqdn', 'localhost')
+```
+y luego:
+```
+Setting.set('http_type', 'http')
+```
+Esto hace que Zammad deje de esperar la URL de ngrok.
+
+Sal de la consola:
+
+exit
+🔧 3️⃣ Reiniciar Zammad
+```
+sudo systemctl restart zammad
+```
+Espera unos segundos.
+
