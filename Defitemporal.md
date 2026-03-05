@@ -353,8 +353,6 @@ Agregar:
 ```
 
 ### 9.4 `index.js` (versión estable)
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     index.js
-// index.js
 
 ```
 import express from "express";
@@ -673,26 +671,3 @@ Opción:
 | **Chatwoot** | 192.168.136.121 | <http://192.168.136.121:3000>          |
 
 ***
-
-# 🟦 **16. FLUJO FINAL FUNCIONAL**
-
-✔ Cliente escribe en Chatwoot → llega a Zammad como `type: web`  
-✔ Agente pulsa **Responder al Chat** → nota pública → llega a Chatwoot  
-✔ Sin correos  
-✔ Sin firmas  
-✔ Sin `[zammad]`  
-✔ Sin loops  
-✔ Persistencia conversationMap.json  
-✔ Compatible con reinicios
-
-***
-
-Si quieres, puedo generar también:
-
-✅ Versión PDF  
-✅ Versión más corta  
-✅ Versión con índice  
-✅ Versión con imágenes y diagramas  
-✅ Versión para tu repositorio GitHub exactamente con el estilo que usas
-
-¿Quieres alguna de esas?
