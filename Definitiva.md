@@ -1045,7 +1045,7 @@ app.post("/chatwoot", async (req, res) => {
             customer_id: customerId,
             article: {
               subject: "Nuevo mensaje desde Chatwoot",
-              body: message,
+              body: message.replace(/<[^>]*>?/gm, ""),
               type: "note",
               internal: false
             }
@@ -1070,7 +1070,7 @@ app.post("/chatwoot", async (req, res) => {
         {
           ticket_id: ticketId,
           subject: "Nuevo mensaje desde Chatwoot",
-          body: message,
+          body: message.replace(/<[^>]*>?/gm, ""),
           type: "note",
           internal: false
         },
