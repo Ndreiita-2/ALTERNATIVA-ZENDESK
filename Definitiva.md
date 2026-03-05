@@ -1,3 +1,9 @@
+zm@zammad:~$ ngrok http 80
+
+
+zm@zammad:~/chat-integration$ node server.js
+
+
 # 🖥️ CONFIGURACIÓN DE RED (AMBOS SERVIDORES)
 
 | Zammad                  | Chatwoot                |
