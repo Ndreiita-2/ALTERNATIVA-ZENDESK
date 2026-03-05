@@ -1,8 +1,3 @@
-¡Perfecto Andrea!  
-Aquí tienes la **GUÍA DEFINITIVA, ACTUALIZADA, ORDENADA Y CORREGIDA**, en **formato Markdown (`.md`)**, lista para copiar/pegar en GitHub.
-
-Incluye:
-
 *   Configuración de red
 *   Instalación de Zammad
 *   Instalación de Chatwoot
@@ -13,8 +8,6 @@ Incluye:
 *   Macro
 *   Ajustes de notas
 *   Errores resueltos
-
-Todo limpio, actualizado y ordenado.
 
 ***
 
