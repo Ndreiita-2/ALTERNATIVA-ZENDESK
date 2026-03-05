@@ -1225,6 +1225,10 @@ Tú decides 🚀
 -------------------------------TOKEN INVALID AL REINICIAR------------------------------------------------
 2️⃣ Cambiar la Base URL manualmente
 
+En tu servidor ejecuta:
+```
+sudo zammad run rails c
+```
 Ahora pega esto:
 ```
 Setting.set('fqdn', 'localhost')
